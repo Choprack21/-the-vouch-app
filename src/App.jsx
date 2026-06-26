@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import './index.css';
 import { supabase } from './supabaseClient';
+import AdminDashboard from './components/AdminDashboard';
 
 const stripePromise = loadStripe('pk_test_51Tlyh2EGQubGZS5lA3kE5JGvedPQOiiDKi9FeaN9U2zUiSH8nhzlCBMCHMNBCa7OLmNGCHS1voHMo4XQYAdGHvTn00cTYxOZJe');
 
@@ -49,7 +50,15 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        setCurrentView('dashboard');
+        if (window.location.pathname === '/admin') {
+          if (session.user.email === 'choprackz@gmail.com') {
+            setCurrentView('admin');
+          } else {
+            setCurrentView('dashboard');
+          }
+        } else {
+          setCurrentView('dashboard');
+        }
         setCurrentUserEmail(session.user.email);
         const { data: subData } = await supabase
           .from('subscriptions')
@@ -105,7 +114,15 @@ function App() {
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        setCurrentView('dashboard');
+        if (window.location.pathname === '/admin') {
+          if (session.user.email === 'choprackz@gmail.com') {
+            setCurrentView('admin');
+          } else {
+            setCurrentView('dashboard');
+          }
+        } else {
+          setCurrentView('dashboard');
+        }
         setCurrentUserEmail(session.user.email);
         const { data: subData } = await supabase
           .from('subscriptions')
@@ -311,7 +328,13 @@ function App() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setIsProcessing(false);
       if (error) setAuthError(error.message);
-      else setCurrentView('dashboard');
+      else {
+        if (window.location.pathname === '/admin' && email === 'choprackz@gmail.com') {
+          setCurrentView('admin');
+        } else {
+          setCurrentView('dashboard');
+        }
+      }
     } else {
       const { error } = await supabase.auth.signUp({
         email, 
@@ -479,6 +502,10 @@ function App() {
   }
 
   // Dashboard Application
+  if (currentView === 'admin') {
+    return <AdminDashboard setCurrentView={setCurrentView} />;
+  }
+
   return (
     <div className="dashboard-container">
       <nav className="sidebar">

@@ -138,5 +138,31 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), async (req, re
   res.json({received: true});
 });
 
+
+// Admin Endpoints
+const adminSupabase = createClient(
+  'https://ctxyjhjxrtvzntlgrkxn.supabase.co', 
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'fallback_key'
+);
+
+app.get('/api/admin/users', async (req, res) => {
+  const { data: users, error: uError } = await adminSupabase.auth.admin.listUsers();
+  if (uError) return res.status(500).json({ error: uError.message });
+  
+  const { data: subs, error: sError } = await adminSupabase.from('subscriptions').select('*');
+  if (sError) return res.status(500).json({ error: sError.message });
+  
+  res.json({ users: users.users, subscriptions: subs });
+});
+
+app.post('/api/admin/ban', async (req, res) => {
+  const { userId } = req.body;
+  const { error } = await adminSupabase.auth.admin.deleteUser(userId);
+  if (error) return res.status(500).json({ error: error.message });
+  
+  res.json({ success: true });
+});
+
 const PORT = 3001;
+
 app.listen(PORT, () => console.log(`Secure Backend API listening on port ${PORT}`));
